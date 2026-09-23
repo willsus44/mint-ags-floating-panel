@@ -1,0 +1,14 @@
+*.bak
+*.bak1
+*.bak2
+*.bak3
+*.bak4
+*.disabled
+*.log
+
+__pycache__/
+*.pyc
+
+.DS_Store
+Thumbs.db
+

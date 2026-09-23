@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Plank AGS Fix
+Comment=Inicia Plank después de que AGS esté listo
+Exec=/bin/bash /home/willian/.local/bin/plank-fix-ags
+Terminal=false
+X-GNOME-Autostart-enabled=true
+Hidden=false
+NoDisplay=false

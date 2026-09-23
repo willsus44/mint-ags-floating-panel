@@ -1,0 +1,14 @@
+#!/bin/bash
+
+PID_FILE="/tmp/miku-launcher-$(id -u).pid"
+
+if [ -f "$PID_FILE" ]; then
+    PID="$(cat "$PID_FILE" 2>/dev/null)"
+
+    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        kill -USR1 "$PID"
+        exit 0
+    fi
+fi
+
+exec "$HOME/.local/bin/miku-launcher"

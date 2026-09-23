@@ -1,0 +1,739 @@
+window.quickpanel-window {
+    background: transparent;
+}
+
+.quickpanel {
+    min-width: 380px;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(20, 22, 32, 0.72);
+    border: 2px solid #39c5bb;
+    color: #f5fbff;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f5fbff;
+    margin-bottom: 4px;
+}
+
+.grid {
+    background: transparent;
+}
+
+.quick-button {
+    min-width: 170px;
+    padding: 13px;
+    border-radius: 15px;
+    background: rgba(54, 56, 70, 0.72);
+    color: #f5fbff;
+    border: none;
+}
+
+.quick-button:hover {
+    background: #39c5bb;
+    color: #061622;
+}
+
+.wifi-section {
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(12, 14, 22, 0.72);
+}
+
+.section-title {
+    font-weight: bold;
+    color: #f5fbff;
+}
+
+.small-button {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(57, 197, 187, 0.22);
+    color: #f5fbff;
+    border: none;
+}
+
+.small-button:hover {
+    background: #39c5bb;
+    color: #061622;
+}
+
+.wifi-list {
+    background: transparent;
+}
+
+.wifi-row {
+    padding: 9px 10px;
+    border-radius: 12px;
+    background: rgba(54, 56, 70, 0.72);
+    color: #f5fbff;
+    border: none;
+}
+
+.wifi-row:hover {
+    background: rgba(57, 197, 187, 0.78);
+    color: #061622;
+}
+
+.wifi-active {
+    background: rgba(57, 197, 187, 0.45);
+}
+
+.wifi-empty {
+    color: #b8bac8;
+    padding: 6px;
+}
+
+.slider-row {
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(12, 14, 22, 0.72);
+}
+
+.slider-title {
+    color: #f5fbff;
+    font-weight: bold;
+}
+
+.slider-value {
+    color: #39c5bb;
+    font-weight: bold;
+}
+
+.slider {
+    min-height: 24px;
+}
+
+.slider trough {
+    min-height: 8px;
+    border-radius: 99px;
+    background: rgba(80, 84, 102, 0.72);
+}
+
+.slider highlight {
+    border-radius: 99px;
+    background: #39c5bb;
+}
+
+.slider slider {
+    min-width: 18px;
+    min-height: 18px;
+    border-radius: 99px;
+    background: #f5fbff;
+    border: 2px solid #39c5bb;
+}
+
+.info-box {
+    padding: 10px;
+    border-radius: 15px;
+    background: rgba(20, 22, 30, 0.75);
+}
+
+.info-row {
+    padding: 4px 2px;
+}
+
+.info-title {
+    color: #b8bac8;
+}
+
+.info-value {
+    color: #f5fbff;
+    font-weight: bold;
+}
+
+.bottom-row {
+    background: transparent;
+}
+
+.bottom-row .quick-button {
+    min-width: 110px;
+    padding: 13px 8px;
+}
+
+
+.bt-section {
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(12, 14, 22, 0.82);
+}
+
+.bt-list {
+    background: transparent;
+}
+
+.bt-row {
+    padding: 9px 10px;
+    border-radius: 12px;
+    background: rgba(54, 56, 70, 0.95);
+    color: #f5fbff;
+    border: none;
+}
+
+.bt-row:hover {
+    background: rgba(57, 197, 187, 0.78);
+    color: #061622;
+}
+
+.bt-active {
+    background: rgba(57, 197, 187, 0.45);
+}
+
+.bt-empty {
+    color: #b8bac8;
+    padding: 6px;
+}
+.quick-button-active {
+    background: #39c5bb;
+    color: #061622;
+}
+
+.quick-button-active:hover {
+    background: #4ee6db;
+    color: #061622;
+}
+.quick-button-on {
+    background: #39c5bb;
+    color: #061622;
+}
+
+.quick-button-on:hover {
+    background: #4ee6db;
+    color: #061622;
+}
+.power-grid {
+    background: transparent;
+}
+
+.power-grid .quick-button {
+    min-width: 175px;
+    padding: 13px 10px;
+}
+
+.power-grid > box:last-child .quick-button {
+    min-width: 360px;
+}
+
+.power-grid {
+    background: transparent;
+}
+
+.power-row {
+    background: transparent;
+}
+
+.power-row .power-button {
+    min-width: 0;
+    padding: 13px 10px;
+}
+
+.power-row-full .power-button {
+    min-width: 0;
+}
+window,
+window.quickpanel-window,
+.quickpanel-window {
+    background: transparent;
+    background-color: transparent;
+}
+
+.quickpanel {
+    background: rgba(12, 14, 22, 0.62);
+    border: 2px solid rgba(57, 197, 187, 0.95);
+    border-radius: 24px;
+}
+
+.slider-row,
+.info-box,
+.wifi-section,
+.bt-section {
+    background: rgba(8, 10, 18, 0.46);
+}
+
+.quick-button,
+.wifi-row,
+.bt-row {
+    background: rgba(54, 56, 70, 0.62);
+}
+
+.quick-button:hover,
+.wifi-row:hover,
+.bt-row:hover {
+    background: rgba(57, 197, 187, 0.82);
+    color: #061622;
+}
+
+.quick-button-on {
+    background: rgba(57, 197, 187, 0.88);
+    color: #061622;
+}
+
+* {
+    font-family: "Noto Sans", "Font Awesome 6 Free", "FontAwesome", "Symbols Nerd Font";
+}
+window.quickpanel-backdrop,
+.quickpanel-backdrop {
+    background: transparent;
+    background-color: transparent;
+}
+
+.quickpanel {
+    min-width: 420px;
+}
+
+.wifi-row label,
+.bt-row label {
+    font-size: 13px;
+}
+
+.wifi-section,
+.bt-section {
+    min-width: 0;
+}
+
+.wifi-row,
+.bt-row {
+    min-width: 0;
+}
+.audio-section,
+.mode-section {
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(8, 10, 18, 0.46);
+}
+
+.audio-list {
+    background: transparent;
+}
+
+.audio-row {
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(54, 56, 70, 0.62);
+    color: #f5fbff;
+}
+
+.audio-empty {
+    color: #b8bac8;
+    padding: 6px;
+}
+
+.mode-current {
+    color: #39c5bb;
+    font-weight: bold;
+}
+
+.mode-grid {
+    background: transparent;
+}
+
+.mode-button {
+    padding: 12px 10px;
+    border-radius: 14px;
+    background: rgba(54, 56, 70, 0.62);
+    color: #f5fbff;
+    border: none;
+}
+
+.mode-button:hover {
+    background: rgba(57, 197, 187, 0.82);
+    color: #061622;
+}
+
+.mode-active {
+    background: rgba(57, 197, 187, 0.88);
+    color: #061622;
+}
+
+.expand-arrow-button {
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0;
+    margin-left: 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #f5fbff;
+}
+
+.expand-arrow-button:hover {
+    background: rgba(57, 197, 187, 0.18);
+    color: #39c5bb;
+}
+
+.expand-arrow-label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* =========================================================
+   ISLAS FLOTANTES - MIKU
+   ========================================================= */
+
+.island {
+    background: rgba(15, 17, 26, 0.72);
+    border: 1px solid rgba(57, 197, 187, 0.75);
+    color: #f5fbff;
+}
+
+.island-button {
+    background: transparent;
+    color: #f5fbff;
+}
+
+.island-button:hover {
+    background: rgba(57, 197, 187, 0.22);
+    color: #39c5bb;
+}
+
+.island-button:active {
+    background: rgba(57, 197, 187, 0.32);
+}
+
+.launcher-button,
+.quickpanel-button {
+    color: #39c5bb;
+}
+
+.island-clock {
+    color: #f5fbff;
+}
+
+
+/* CALENDARIO - MIKU */
+
+.island-clock-button:hover {
+    background: rgba(57, 197, 187, 0.18);
+}
+
+.calendar-popup {
+    border: 1px solid rgba(57, 197, 187, 0.75);
+}
+
+.calendar-widget {
+    background: rgba(12, 14, 22, 0.72);
+    color: #f5fbff;
+}
+
+.calendar-widget:selected {
+    background: #39c5bb;
+    color: #061622;
+}
+
+.calendar-widget button:hover {
+    background: rgba(57, 197, 187, 0.20);
+}
+
+
+/* CLIMA - MIKU */
+
+.weather-popup {
+    border: 1px solid rgba(57, 197, 187, 0.75);
+}
+
+.weather-value {
+    color: #39c5bb;
+}
+
+.weather-button:hover {
+    background: rgba(57, 197, 187, 0.22);
+    color: #39c5bb;
+}
+
+
+/* =========================================================
+   ESTILOS COMUNES - NO DEPENDEN DEL TEMA
+   ========================================================= */
+
+.popup-window {
+    background: transparent;
+    background-color: transparent;
+}
+
+.popup-panel {
+    background: rgba(18, 22, 28, 0.94);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.wifi-popup {
+    min-width: 330px;
+}
+
+.bluetooth-popup {
+    min-width: 310px;
+}
+
+.audio-popup {
+    min-width: 360px;
+}
+
+.session-popup {
+    min-width: 290px;
+}
+
+.session-popup-compact {
+    min-width: 290px;
+}
+
+/* ---------- Panel de sesión ---------- */
+
+.session-header {
+    padding: 1px 2px 4px 2px;
+}
+
+.session-subtitle {
+    font-size: 8pt;
+    opacity: 0.62;
+}
+
+.session-control-box {
+    padding: 8px;
+    border-radius: 12px;
+}
+
+.session-theme-toggle {
+    min-height: 32px;
+    padding: 4px 8px;
+    border-radius: 10px;
+}
+
+.session-theme-toggle .expand-arrow-label {
+    min-width: 18px;
+}
+
+.session-section-label {
+    font-size: 8pt;
+    opacity: 0.62;
+    margin: 2px 2px 0px 2px;
+}
+
+.session-popup .power-row .power-button {
+    min-width: 0px;
+}
+
+.session-power-grid .power-button {
+    min-height: 34px;
+    padding: 4px 7px;
+}
+
+/* ---------- Selector de temas ---------- */
+
+.session-popup .theme-section {
+    background: rgba(8, 12, 18, 0.42);
+    border-radius: 12px;
+
+    padding: 8px;
+    margin-top: 4px;
+}
+
+.session-popup .theme-section .section-title {
+    font-size: 9pt;
+    font-weight: 600;
+
+    margin: 0px 2px 5px 2px;
+    padding: 0px;
+
+    opacity: 0.82;
+}
+
+.session-popup .theme-grid {
+    padding: 0px;
+    margin: 0px;
+    min-height: 0px;
+}
+
+.session-popup .theme-button {
+    min-height: 28px;
+    min-width: 0px;
+
+    padding: 3px 8px;
+    margin: 2px;
+
+    background: rgba(45, 50, 62, 0.58);
+
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 9px;
+
+    box-shadow: none;
+}
+
+.session-popup .theme-button label {
+    font-size: 8.5pt;
+    padding: 0px;
+    margin: 0px;
+}
+
+/*
+ * Importante:
+ * NO ponemos aquí colores de accent/hover.
+ * De esa manera cada miku.css, purple.css, etc.
+ * conserva su propio color.
+ */
+
+/* ---------- Islas ---------- */
+
+.island-window {
+    background-color: transparent;
+}
+
+.island {
+    min-height: 34px;
+
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 6px;
+    padding-right: 6px;
+
+    border-radius: 12px;
+}
+
+.island-left,
+.island-center,
+.island-right {
+    min-height: 34px;
+}
+
+.island-left button,
+.island-right button {
+    min-height: 28px;
+    min-width: 0px;
+
+    padding: 0px 6px;
+    margin: 0px;
+
+    border: none;
+    box-shadow: none;
+}
+
+.island-left button label,
+.island-right button label {
+    min-height: 0px;
+    padding: 0px;
+    margin: 0px;
+    font-size: 10pt;
+}
+
+.island-center {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.island-clock {
+    font-size: 10pt;
+}
+
+.island-left {
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.island-left .launcher-button {
+    min-width: 44px;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+
+/* =========================================================
+   CALENDARIO DESPLEGABLE - ESTRUCTURA COMÚN
+   ========================================================= */
+
+.island-clock-button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    min-height: 28px;
+    padding: 0px 8px;
+    margin: 0px;
+    border-radius: 9px;
+}
+
+.calendar-popup {
+    min-width: 280px;
+}
+
+.calendar-header {
+    padding: 1px 2px 5px 2px;
+}
+
+.calendar-widget {
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(12, 14, 22, 0.72);
+    color: #f5fbff;
+}
+
+.calendar-widget button {
+    min-height: 26px;
+    min-width: 26px;
+    padding: 2px;
+    border-radius: 7px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   TRANSICIONES DE TEMA EN VIVO
+   ========================================================= */
+
+.island,
+.popup-panel,
+.quick-button,
+.small-button,
+.wifi-row,
+.bt-row,
+.audio-row,
+.mode-button,
+.theme-button,
+.session-theme-toggle,
+.island-button,
+.island-clock-button,
+.calendar-widget,
+.weather-info-box,
+.slider trough,
+.slider highlight,
+.slider slider {
+    transition: 420ms ease;
+}
+
+/* =========================================================
+   CLIMA DESPLEGABLE - ESTRUCTURA COMÚN
+   ========================================================= */
+
+.weather-popup {
+    min-width: 290px;
+}
+
+.weather-header {
+    padding: 2px 2px 5px 2px;
+}
+
+.weather-condition {
+    font-size: 8.5pt;
+    opacity: 0.70;
+}
+
+.weather-main-temp {
+    font-size: 18pt;
+    font-weight: bold;
+}
+
+.weather-info-box {
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(8, 12, 18, 0.42);
+}
+
+.weather-value {
+    font-weight: bold;
+}
+
+.weather-refresh-button {
+    min-height: 30px;
+}

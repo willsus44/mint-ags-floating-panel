@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -e
+
+THEME="$1"
+THEME_DIR="$HOME/.config/ags/themes"
+COMMON="$HOME/.config/ags/common.css"
+STYLE="$HOME/.config/ags/style.css"
+STATE="$HOME/.config/ags/current-theme"
+
+if [ -z "$THEME" ]; then
+    echo "Uso: ags-theme miku|purple|rose|green|gray|red"
+    exit 1
+fi
+
+THEME_FILE="$THEME_DIR/$THEME.css"
+
+if [ ! -f "$THEME_FILE" ]; then
+    echo "Tema no encontrado: $THEME"
+    exit 1
+fi
+
+if [ ! -f "$COMMON" ]; then
+    echo "No existe: $COMMON"
+    exit 1
+fi
+
+TMP="${STYLE}.tmp"
+{
+    cat "$THEME_FILE"
+    printf '\n\n'
+    cat "$COMMON"
+} > "$TMP"
+
+mv "$TMP" "$STYLE"
+echo "$THEME" > "$STATE"
+
+# Importante: NO reiniciamos AGS.
+# config.js recarga este CSS en vivo mediante App.applyCss().
+echo "Tema preparado: $THEME"
