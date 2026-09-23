@@ -6,6 +6,7 @@ import * as Utils from "resource:///com/github/Aylur/ags/utils.js";
 
 import Gdk from "gi://Gdk?version=3.0";
 import GdkX11 from "gi://GdkX11?version=3.0";
+import GLib from "gi://GLib";
 
 const run = cmd => Utils.execAsync(["bash", "-lc", cmd]).catch(err => print(err));
 const shq = str => "'" + String(str).replace(/'/g, "'\\''") + "'";
@@ -306,7 +307,7 @@ const toggleThemeList = () => {
 };
 
 const applyTheme = theme => {
-    const stylePath = "/home/willian/.config/ags/style.css";
+    const stylePath = `${AGS_DIR}/style.css`;
 
     Utils.execAsync(["bash", "-lc", `ags-theme ${shq(theme)}`])
         .then(() => {
@@ -1584,7 +1585,8 @@ const IslandLeft = Widget.Window({
                     run("$HOME/.local/bin/miku-launcher-toggle"),
 
 child: Widget.Icon({
-    icon: "/home/willian/.config/ags/assets/Mikumenu.png",
+    icon: `${AGS_DIR}/assets/Mikumenu.png`,
+
     size: 24,
     valign: "center",
     halign: "center",
@@ -2822,7 +2824,7 @@ const SessionPanel = Widget.Window({
 });
 
 App.config({
-    style: "/home/willian/.config/ags/style.css",
+    style: `${AGS_DIR}/style.css`,
     windows: [
         PanelReserve,
 
