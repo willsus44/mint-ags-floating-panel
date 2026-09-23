@@ -1,0 +1,1087 @@
+#!/usr/bin/env python3
+
+import os
+import subprocess
+import threading
+import signal
+import time
+import gi
+
+gi.require_version("Gtk", "3.0")
+
+from gi.repository import Gtk, Gdk, Gio, GLib, GdkPixbuf
+
+
+MIKU_IMAGE = os.path.expanduser(
+    "~/.config/miku-launcher/assets/miku.png"
+)
+
+PID_FILE = f"/tmp/miku-launcher-{os.getuid()}.pid"
+TOGGLE_GUARD = f"/tmp/miku-launcher-{os.getuid()}.toggle"
+TOGGLE_DELAY = 0.45
+
+CSS = b"""
+window {
+    background-color: transparent;
+}
+
+#main-frame {
+    background-color: rgba(15, 17, 26, 0.82);
+    border: 2px solid #39c5bb;
+    border-radius: 18px;
+    padding: 14px;
+}
+
+#search-entry {
+    background-color: rgba(245, 251, 255, 0.93);
+    color: #061622;
+    border-radius: 14px;
+    padding: 12px 16px;
+    border: none;
+    font-family: Minecraftia;
+    font-size: 12px;
+}
+
+#app-button {
+    background-color: rgba(245, 251, 255, 0.90);
+    color: #061622;
+    border-radius: 12px;
+    padding: 6px 12px;
+    border: 1px solid transparent;
+}
+
+#app-button:hover,
+#app-button:focus {
+    background-color: rgba(57, 197, 187, 0.33);
+    border: 1px solid #39c5bb;
+}
+
+#app-label {
+    color: #061622;
+    font-family: Minecraftia;
+    font-size: 12px;
+}
+"""
+
+def toggle_existing_instance():
+    if not os.path.exists(PID_FILE):
+        return False
+
+    try:
+        with open(PID_FILE, "r") as f:
+            pid = int(f.read().strip())
+
+        # Comprobar que el proceso realmente existe
+        os.kill(pid, 0)
+
+        # Crear una marca temporal para impedir
+        # que Cinnamon vuelva a abrir inmediatamente
+        with open(TOGGLE_GUARD, "w") as f:
+            f.write(str(time.monotonic()))
+
+        # Pedir a la instancia existente que se cierre
+        os.kill(pid, signal.SIGUSR1)
+
+        return True
+
+    except (ProcessLookupError, ValueError, OSError):
+        try:
+            os.remove(PID_FILE)
+        except OSError:
+            pass
+
+        return False
+
+def recently_toggled():
+    if not os.path.exists(TOGGLE_GUARD):
+        return False
+
+    try:
+        with open(TOGGLE_GUARD, "r") as f:
+            timestamp = float(f.read().strip())
+
+        elapsed = time.monotonic() - timestamp
+
+        if elapsed < TOGGLE_DELAY:
+            return True
+
+    except (OSError, ValueError):
+        pass
+
+    try:
+        os.remove(TOGGLE_GUARD)
+    except OSError:
+        pass
+
+    return False
+
+def write_pid_file():
+    with open(PID_FILE, "w") as f:
+        f.write(str(os.getpid()))
+
+
+def remove_pid_file():
+    try:
+        if os.path.exists(PID_FILE):
+            with open(PID_FILE, "r") as f:
+                pid = int(f.read().strip())
+
+            if pid == os.getpid():
+                os.remove(PID_FILE)
+
+    except (OSError, ValueError):
+        pass
+
+class MikuLauncher(Gtk.Window):
+
+    def __init__(self):
+        super().__init__()
+
+        self.set_title("Miku Launcher")
+        self.set_decorated(False)
+        self.set_keep_above(True)
+        self.set_skip_taskbar_hint(True)
+        self.set_skip_pager_hint(True)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.set_default_size(700, 520)
+
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual()
+
+        if visual:
+            self.set_visual(visual)
+
+        self.set_app_paintable(True)
+
+        self.connect(
+            "key-press-event",
+            self.on_key_press
+        )
+
+        self.connect(
+            "focus-out-event",
+            self.on_focus_out
+        )
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS)
+
+        Gtk.StyleContext.add_provider_for_screen(
+            screen,
+            provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+        self.apps = self.load_apps()
+        self.filtered_apps = list(self.apps)
+
+        self.file_results = []
+        self.search_generation = 0
+
+        self.current_buttons = []
+        self.selected_index = -1
+        self.closing = False
+        self.pending_action = None
+        self.build_ui()
+
+        self.set_opacity(0.0)
+
+        GLib.timeout_add(
+            10,
+            self.fade_in
+        )
+
+    def load_apps(self):
+        apps = []
+
+        for app in Gio.AppInfo.get_all():
+            try:
+                if not app.should_show():
+                    continue
+
+                name = app.get_display_name()
+
+                if not name:
+                    continue
+
+                apps.append({
+                    "type": "app",
+                    "name": name,
+                    "app": app,
+                    "icon": app.get_icon()
+                })
+
+            except Exception:
+                continue
+
+        apps.sort(
+            key=lambda x: x["name"].lower()
+        )
+
+        return apps
+
+    def build_ui(self):
+        overlay = Gtk.Overlay()
+        self.add(overlay)
+
+        outer = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=0
+        )
+
+        outer.set_margin_top(180)
+        outer.set_margin_bottom(15)
+        outer.set_margin_start(20)
+        outer.set_margin_end(20)
+
+        overlay.add(outer)
+
+        frame = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=10
+        )
+
+        frame.set_name("main-frame")
+
+        outer.pack_start(
+            frame,
+            True,
+            True,
+            0
+        )
+
+        self.search = Gtk.Entry()
+
+        self.search.set_name(
+            "search-entry"
+        )
+
+        self.search.set_placeholder_text(
+            "Buscar aplicaciones y archivos..."
+        )
+
+        self.search.connect(
+            "changed",
+            self.on_search_changed
+        )
+
+        self.search.connect(
+            "activate",
+            self.launch_first_result
+        )
+
+        frame.pack_start(
+            self.search,
+            False,
+            False,
+            0
+        )
+
+        self.grid = Gtk.Grid()
+
+        self.grid.set_column_spacing(8)
+        self.grid.set_row_spacing(8)
+        self.grid.set_column_homogeneous(True)
+
+        frame.pack_start(
+            self.grid,
+            True,
+            True,
+            0
+        )
+
+        self.populate_grid(
+            self.apps[:12]
+        )
+
+        if os.path.exists(MIKU_IMAGE):
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(
+                MIKU_IMAGE
+            )
+
+            target_height = 200
+
+            original_width = pixbuf.get_width()
+            original_height = pixbuf.get_height()
+
+            scale = (
+                target_height
+                / original_height
+            )
+
+            target_width = int(
+                original_width * scale
+            )
+
+            pixbuf = pixbuf.scale_simple(
+                target_width,
+                target_height,
+                GdkPixbuf.InterpType.BILINEAR
+            )
+
+            image = Gtk.Image.new_from_pixbuf(
+                pixbuf
+            )
+
+            image.set_halign(
+                Gtk.Align.CENTER
+            )
+
+            image.set_valign(
+                Gtk.Align.START
+            )
+
+            image.set_margin_top(0)
+
+            overlay.add_overlay(image)
+
+        self.show_all()
+        self.search.grab_focus()
+
+    def create_app_button(self, item):
+        button = Gtk.Button()
+
+        button.set_name(
+            "app-button"
+        )
+
+        button.set_relief(
+            Gtk.ReliefStyle.NONE
+        )
+
+        box = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL,
+            spacing=10
+        )
+
+        icon = Gtk.Image()
+
+        if item["icon"] is not None:
+            try:
+                icon.set_from_gicon(
+                    item["icon"],
+                    Gtk.IconSize.DIALOG
+                )
+
+                icon.set_pixel_size(28)
+
+            except Exception:
+                pass
+
+        label = Gtk.Label(
+            label=item["name"]
+        )
+
+        label.set_name(
+            "app-label"
+        )
+
+        label.set_xalign(0.0)
+        label.set_ellipsize(3)
+
+        box.pack_start(
+            icon,
+            False,
+            False,
+            0
+        )
+
+        box.pack_start(
+            label,
+            True,
+            True,
+            0
+        )
+
+        button.add(box)
+
+        button.connect(
+            "clicked",
+            self.launch_app,
+            item["app"]
+        )
+
+        return button
+
+    def create_file_button(self, item):
+        button = Gtk.Button()
+
+        button.set_name(
+            "app-button"
+        )
+
+        button.set_relief(
+            Gtk.ReliefStyle.NONE
+        )
+
+        box = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL,
+            spacing=10
+        )
+
+        icon = Gtk.Image()
+
+        # Obtener el icono real del archivo o carpeta
+        try:
+            file_obj = Gio.File.new_for_path(
+                item["path"]
+            )
+
+            info = file_obj.query_info(
+                "standard::icon",
+                Gio.FileQueryInfoFlags.NONE,
+                None
+            )
+
+            file_icon = info.get_icon()
+
+            if file_icon is not None:
+                icon.set_from_gicon(
+                    file_icon,
+                    Gtk.IconSize.DIALOG
+                )
+
+            else:
+                if item["is_dir"]:
+                    icon.set_from_icon_name(
+                        "folder",
+                        Gtk.IconSize.DIALOG
+                    )
+                else:
+                    icon.set_from_icon_name(
+                        "text-x-generic",
+                        Gtk.IconSize.DIALOG
+                    )
+
+        except Exception:
+            if item["is_dir"]:
+                icon.set_from_icon_name(
+                    "folder",
+                    Gtk.IconSize.DIALOG
+                )
+            else:
+                icon.set_from_icon_name(
+                    "text-x-generic",
+                    Gtk.IconSize.DIALOG
+                )
+
+        icon.set_pixel_size(28)
+
+        label = Gtk.Label(
+            label=item["name"]
+        )
+
+        label.set_name(
+            "app-label"
+        )
+
+        label.set_xalign(0.0)
+        label.set_ellipsize(3)
+
+        box.pack_start(
+            icon,
+            False,
+            False,
+            0
+        )
+
+        box.pack_start(
+            label,
+            True,
+            True,
+            0
+        )
+
+        button.add(box)
+
+        button.connect(
+            "clicked",
+            self.open_file,
+            item["path"]
+        )
+
+        return button
+
+    def populate_grid(self, items):
+        for child in self.grid.get_children():
+            self.grid.remove(child)
+
+        self.current_buttons = []
+
+        for index, item in enumerate(
+            items[:12]
+        ):
+            row = index // 2
+            column = index % 2
+
+            if item["type"] == "app":
+                button = self.create_app_button(
+                    item
+                )
+
+            else:
+                button = self.create_file_button(
+                    item
+                )
+
+            self.grid.attach(
+                button,
+                column,
+                row,
+                1,
+                1
+            )
+
+            self.current_buttons.append(
+                button
+            )
+
+        self.selected_index = -1
+
+        self.grid.show_all()
+
+    def on_search_changed(self, entry):
+        text = (
+            entry
+            .get_text()
+            .strip()
+            .lower()
+        )
+
+        self.search_generation += 1
+        generation = self.search_generation
+
+        if not text:
+            self.filtered_apps = list(
+                self.apps
+            )
+
+            self.file_results = []
+
+            self.populate_grid(
+                self.filtered_apps
+            )
+
+            return
+
+        self.filtered_apps = [
+            app
+            for app in self.apps
+            if text in app["name"].lower()
+        ]
+
+        self.populate_grid(
+            self.filtered_apps
+        )
+
+        self.search_files_async(
+            text,
+            generation
+        )
+    def score_file_result(self, path, query):
+        home = os.path.expanduser("~")
+
+        # Excluir rutas del sistema
+        blocked_prefixes = (
+            "/proc/",
+            "/sys/",
+            "/dev/",
+            "/run/",
+            "/usr/",
+            "/var/",
+            "/opt/",
+            "/snap/",
+            "/boot/",
+            "/lib/",
+            "/lib64/",
+            "/bin/",
+            "/sbin/",
+            "/etc/"
+        )
+
+        if path.startswith(blocked_prefixes):
+            return None
+
+        # Sólo queremos resultados dentro del HOME
+        if not path.startswith(home + os.sep):
+            return None
+
+        name = os.path.basename(path).lower()
+        path_lower = path.lower()
+        query = query.lower()
+
+        score = 0
+
+        # Coincidencia exacta del nombre
+        if name == query:
+            score += 100
+
+        # Empieza por la búsqueda
+        elif name.startswith(query):
+            score += 80
+
+        # Contiene la búsqueda
+        elif query in name:
+            score += 60
+
+        # Coincidencia sólo en la ruta
+        elif query in path_lower:
+            score += 20
+
+        # Carpetas personales prioritarias
+        priority_dirs = (
+            "Desktop",
+            "Escritorio",
+            "Documents",
+            "Documentos",
+            "Downloads",
+            "Descargas",
+            "Pictures",
+            "Imágenes",
+            "Images",
+            "Music",
+            "Música",
+            "Videos",
+            "Vídeos"
+        )
+
+        relative_path = os.path.relpath(
+            path,
+            home
+        )
+
+        first_component = relative_path.split(
+            os.sep,
+            1
+        )[0]
+
+        if first_component in priority_dirs:
+            score += 30
+
+        # Preferir rutas menos profundas
+        depth = relative_path.count(os.sep)
+
+        score -= depth * 2
+
+        # Dar una pequeña ventaja a carpetas
+        if os.path.isdir(path):
+            score += 5
+
+        return score
+
+    def search_files_async(
+        self,
+        text,
+        generation
+    ):
+        def worker():
+            results = []
+
+            try:
+                process = subprocess.run(
+                    [
+                        "plocate",
+                        "-i",
+                        "--limit",
+                        "200",
+                        text
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+
+                for path in process.stdout.splitlines():
+                    path = path.strip()
+
+                    if not path:
+                        continue
+
+                    if not os.path.exists(path):
+                        continue
+
+                    score = self.score_file_result(
+                        path,
+                        text
+                    )
+
+                    if score is None:
+                        continue
+
+                    name = os.path.basename(path)
+
+                    if not name:
+                        continue
+
+                    results.append({
+                        "type": "file",
+                        "name": name,
+                        "path": path,
+                        "is_dir": os.path.isdir(path),
+                        "score": score
+                    })
+
+                # Ordenamos primero por relevancia
+                results.sort(
+                    key=lambda item: (
+                        -item["score"],
+                        item["name"].lower()
+                    )
+                )
+
+                # Sólo conservamos los mejores
+                results = results[:20]
+
+            except Exception as exc:
+                print(
+                    "Error buscando archivos:",
+                    exc
+                )
+
+            GLib.idle_add(
+                self.apply_file_results,
+                text,
+                generation,
+                results
+            )
+
+        threading.Thread(
+            target=worker,
+            daemon=True
+        ).start()
+
+    def apply_file_results(
+        self,
+        text,
+        generation,
+        results
+    ):
+        if generation != self.search_generation:
+            return False
+
+        current_text = (
+            self.search
+            .get_text()
+            .strip()
+            .lower()
+        )
+
+        if current_text != text:
+            return False
+
+        self.file_results = results
+
+        if self.filtered_apps:
+            combined = (
+                self.filtered_apps[:4]
+                + self.file_results
+            )
+        else:
+            combined = self.file_results
+
+        self.populate_grid(
+            combined
+        )
+
+        return False
+
+    def launch_app(
+        self,
+        button,
+        app
+    ):
+        def action():
+            app.launch(
+                [],
+                None
+            )
+
+        self.start_close_animation(
+            action
+        )
+    def open_file(
+        self,
+        button,
+        path
+    ):
+        def action():
+            file_obj = Gio.File.new_for_path(
+                path
+            )
+
+            uri = file_obj.get_uri()
+
+            Gio.AppInfo.launch_default_for_uri(
+                uri,
+                None
+            )
+
+        self.start_close_animation(
+            action
+        )
+
+    def launch_first_result(
+        self,
+        entry
+    ):
+        combined = (
+            self.filtered_apps
+            + self.file_results
+        )
+
+        if not combined:
+            return
+
+        item = combined[0]
+
+        if item["type"] == "app":
+
+            def action():
+                item["app"].launch(
+                    [],
+                    None
+                )
+
+        else:
+
+            def action():
+                file_obj = Gio.File.new_for_path(
+                    item["path"]
+                )
+
+                uri = file_obj.get_uri()
+
+                Gio.AppInfo.launch_default_for_uri(
+                    uri,
+                    None
+                )
+
+        self.start_close_animation(
+            action
+        )
+
+    def on_key_press(
+        self,
+        widget,
+        event
+    ):
+        key = Gdk.keyval_name(
+            event.keyval
+        )
+
+        if key == "Escape":
+            self.start_close_animation()
+            return True
+
+        if not self.current_buttons:
+            return False
+
+        total = len(
+            self.current_buttons
+        )
+
+        if key == "Down":
+            if self.selected_index == -1:
+                self.selected_index = 0
+
+            else:
+                new_index = (
+                    self.selected_index + 2
+                )
+
+                if new_index < total:
+                    self.selected_index = (
+                        new_index
+                    )
+
+            self.current_buttons[
+                self.selected_index
+            ].grab_focus()
+
+            return True
+
+        if key == "Up":
+            if self.selected_index == -1:
+                self.selected_index = 0
+
+            else:
+                new_index = (
+                    self.selected_index - 2
+                )
+
+                if new_index >= 0:
+                    self.selected_index = (
+                        new_index
+                    )
+
+            self.current_buttons[
+                self.selected_index
+            ].grab_focus()
+
+            return True
+
+        if key == "Right":
+            if self.selected_index == -1:
+                self.selected_index = 0
+
+            elif (
+                self.selected_index + 1
+                < total
+            ):
+                self.selected_index += 1
+
+            self.current_buttons[
+                self.selected_index
+            ].grab_focus()
+
+            return True
+
+        if key == "Left":
+            if self.selected_index == -1:
+                self.selected_index = 0
+
+            elif (
+                self.selected_index - 1
+                >= 0
+            ):
+                self.selected_index -= 1
+
+            self.current_buttons[
+                self.selected_index
+            ].grab_focus()
+
+            return True
+
+        if key in (
+            "Return",
+            "KP_Enter"
+        ):
+            if self.selected_index >= 0:
+                self.current_buttons[
+                    self.selected_index
+                ].clicked()
+
+                return True
+
+        return False
+
+    def on_focus_out(
+        self,
+        widget,
+        event
+    ):
+        self.start_close_animation()
+        return False
+
+    def fade_in(self):
+        opacity = self.get_opacity()
+        opacity += 0.08
+
+        if opacity >= 1.0:
+            self.set_opacity(1.0)
+            return False
+
+        self.set_opacity(opacity)
+        return True
+
+    def fade_out(self):
+        opacity = self.get_opacity()
+        opacity -= 0.08
+
+        if opacity <= 0.0:
+            self.set_opacity(0.0)
+
+            if self.pending_action is not None:
+                try:
+                    self.pending_action()
+                except Exception as exc:
+                    print(
+                        "Error ejecutando acción:",
+                        exc
+                    )
+
+            Gtk.main_quit()
+            return False
+
+        self.set_opacity(opacity)
+        return True
+
+    def start_close_animation(
+        self,
+        action=None
+    ):
+        if self.closing:
+            return
+
+        self.closing = True
+        self.pending_action = action
+
+        GLib.timeout_add(
+            10,
+            self.fade_out
+        )
+
+if __name__ == "__main__":
+
+    # Si ya existe una instancia, Super funciona como toggle:
+    # avisamos a la existente para que se cierre y terminamos.
+    if toggle_existing_instance():
+        raise SystemExit(0)
+
+    # Cinnamon puede lanzar el comando otra vez
+    # unos milisegundos después de usar Super
+    # Ignoramos la segunda invocación
+
+    if recently_toggled():
+        raise SystemExit(0)
+
+    write_pid_file()
+
+    win = MikuLauncher()
+
+    def handle_toggle_signal(signum, frame):
+        GLib.idle_add(
+            win.start_close_animation
+        )
+
+    signal.signal(
+        signal.SIGUSR1,
+        handle_toggle_signal
+    )
+
+    win.connect(
+        "destroy",
+        Gtk.main_quit
+    )
+
+    win.show_all()
+
+    try:
+        Gtk.main()
+
+    finally:
+        remove_pid_file()
+
+    def fade_out(self):
+        opacity = self.get_opacity()
+
+        opacity -= 0.08
+
+        if opacity <= 0.0:
+            self.set_opacity(0.0)
+
+            if self.pending_action is not None:
+                try:
+                    self.pending_action()
+                except Exception as exc:
+                    print(
+                        "Error ejecutando acción:",
+                        exc
+                    )
+
+            Gtk.main_quit()
+            return False
+
+        self.set_opacity(opacity)
+
+        return True
